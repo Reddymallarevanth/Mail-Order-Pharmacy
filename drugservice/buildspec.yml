@@ -1,0 +1,26 @@
+version: 0.2
+phases:
+   install:
+      runtime-versions:
+         docker: 18
+   pre_build:
+      commands:
+      - echo "Entered the pre-build phase"
+      - $(aws ecr get-login  --no-include-email --region $AWS_REGION)
+   build:
+      commands:
+      - echo "Entered build phase"
+      - cd drugservice
+      - mvn compile
+      - mvn package
+      - echo " building docker image"
+      - docker build -t service/drugapp .
+      - docker tag service/drugapp 430321133782.dkr.ecr.us-east-1.amazonaws.com/j008-pod7-drugrepo-ecr:drugapp
+   post_build:
+      commands:
+      - echo "Entered the post-build phase"
+      - docker push 430321133782.dkr.ecr.us-east-1.amazonaws.com/j008-pod7-drugrepo-ecr:drugapp
+      - printf '[{"name":"drugapp-container","imageUri":"%s"}]' 430321133782.dkr.ecr.us-east-1.amazonaws.com/j008-pod7-drugrepo-ecr:drugapp>taskdefinition.json
+artifacts:
+   files:
+   - drugservice/taskdefinition.json
